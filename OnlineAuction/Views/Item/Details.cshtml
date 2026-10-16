@@ -1,0 +1,174 @@
+@model ItemDetailViewModel
+@{
+    ViewData["Title"] = Model.Item.Title;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Item" asp-action="Category" asp-route-id="@Model.Item.CategoryId">
+                @Model.Item.Category?.Name
+            </a>
+        </li>
+        <li class="breadcrumb-item active">@Model.Item.Title</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <!-- Left: Image + Details -->
+    <div class="col-md-7">
+        <div class="card p-3">
+            @if (Model.Item.ImagePath != null)
+            {
+                <img src="@Model.Item.ImagePath" class="img-fluid rounded mb-3"
+                     style="max-height:350px;object-fit:cover;width:100%;" />
+            }
+
+            <div class="d-flex justify-content-between align-items-start">
+                <h3 class="fw-bold">@Model.Item.Title</h3>
+                @if (Model.AuctionEnded)
+                {
+                    <span class="badge bg-danger fs-6">Auction Ended</span>
+                }
+                else
+                {
+                    <span class="badge bg-success fs-6">Active</span>
+                }
+            </div>
+
+            <p class="text-muted">
+                Seller:
+                <a asp-controller="Item" asp-action="SellerProfile"
+                   asp-route-id="@Model.Item.SellerId" class="fw-bold text-decoration-none">
+                    @Model.Item.Seller?.FullName
+                    <small class="text-warning">
+                        ★ @Model.Item.Seller?.CumulativeRating
+                    </small>
+                </a>
+            </p>
+
+            <p>@Model.Item.Description</p>
+
+            @if (Model.Item.DocumentPath != null)
+            {
+                <a href="@Model.Item.DocumentPath" download class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-file-download"></i> Download Document
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Right: Bidding Panel -->
+    <div class="col-md-5">
+        <div class="card p-3 mb-3">
+            <h5 class="fw-bold mb-3"><i class="fas fa-gavel"></i> Bidding Info</h5>
+            <table class="table table-sm table-borderless">
+                <tr>
+                    <td class="text-muted">Minimum Bid</td>
+                    <td class="fw-bold">PKR @Model.Item.MinimumBid.ToString("N0")</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Current Bid</td>
+                    <td class="fw-bold text-success fs-5">
+                        PKR @Model.Item.CurrentBid.ToString("N0")
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Bid Increment</td>
+                    <td>PKR @Model.Item.BidIncrement.ToString("N0")</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Auction Ends</td>
+                    <td class="text-danger fw-bold">
+                        @Model.Item.BidEndDate.ToString("dd MMM yyyy HH:mm")
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Total Bids</td>
+                    <td>@Model.BidHistory.Count</td>
+                </tr>
+            </table>
+
+            @if (!Model.AuctionEnded && User.Identity?.IsAuthenticated == true && !Model.IsCurrentUserSeller)
+            {
+                <form asp-action="PlaceBid" asp-controller="Item" method="post" class="mt-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="itemId" value="@Model.Item.ItemId" />
+                    <div class="input-group">
+                        <span class="input-group-text">PKR</span>
+                        <input type="number" name="bidAmount" class="form-control"
+                               min="@Model.NextMinimumBid" step="1"
+                               value="@Model.NextMinimumBid"
+                               placeholder="Your bid" required />
+                        <button class="btn btn-accent" type="submit">
+                            <i class="fas fa-gavel"></i> Place Bid
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        Minimum bid: PKR @Model.NextMinimumBid.ToString("N0")
+                    </small>
+                </form>
+            }
+
+            @if (Model.IsCurrentUserSeller)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Item.ItemId"
+                   class="btn btn-outline-primary w-100 mt-2">
+                    <i class="fas fa-edit"></i> Edit This Listing
+                </a>
+            }
+
+            @if (!User.Identity?.IsAuthenticated ?? false)
+            {
+                <a asp-controller="Account" asp-action="Login"
+                   class="btn btn-accent w-100 mt-2">Login to Bid</a>
+            }
+        </div>
+
+        <!-- Rating Section (after auction) -->
+        @if (Model.AuctionEnded && User.Identity?.IsAuthenticated == true)
+        {
+            <div class="card p-3 mb-3">
+                <h6 class="fw-bold"><i class="fas fa-star text-warning"></i> Rate the Seller</h6>
+                <form asp-action="Rate" asp-controller="Item" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="itemId" value="@Model.Item.ItemId" />
+                    <input type="hidden" name="ratedUserId" value="@Model.Item.SellerId" />
+                    <div class="mb-2">
+                        <label class="form-label small">Score (-5 to +5)</label>
+                        <input type="number" name="score" class="form-control form-control-sm"
+                               min="-5" max="5" value="0" required />
+                    </div>
+                    <div class="mb-2">
+                        <textarea name="comment" class="form-control form-control-sm" rows="2"
+                                  placeholder="Optional comment"></textarea>
+                    </div>
+                    <button class="btn btn-warning btn-sm w-100" type="submit">Submit Rating</button>
+                </form>
+            </div>
+        }
+
+        <!-- Bid History -->
+        <div class="card p-3">
+            <h6 class="fw-bold mb-2"><i class="fas fa-history"></i> Bid History</h6>
+            @if (!Model.BidHistory.Any())
+            {
+                <p class="text-muted small">No bids yet. Be the first!</p>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var bid in Model.BidHistory)
+                    {
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="small">@bid.Bidder?.FullName</span>
+                            <span class="fw-bold text-success">PKR @bid.Amount.ToString("N0")</span>
+                            <span class="text-muted small">@bid.BidTime.ToString("dd MMM HH:mm")</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>

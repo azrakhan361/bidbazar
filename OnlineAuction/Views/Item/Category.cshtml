@@ -1,0 +1,54 @@
+@model List<Item>
+@{
+    ViewData["Title"] = ViewBag.CategoryName;
+}
+
+<h3 class="fw-bold mb-4">
+    <i class="fas fa-tag" style="color:var(--accent)"></i> @ViewBag.CategoryName
+    <small class="text-muted fs-6">— @Model.Count item(s) for sale</small>
+</h3>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No items currently for sale in this category.</div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4 col-lg-3">
+                <a asp-controller="Item" asp-action="Details" asp-route-id="@item.ItemId"
+                   class="text-decoration-none text-dark">
+                    <div class="card h-100">
+                        @if (item.ImagePath != null)
+                        {
+                            <img src="@item.ImagePath" class="card-img-top"
+                                 style="height:160px;object-fit:cover;" />
+                        }
+                        <div class="card-body">
+                            <h6 class="fw-bold">@item.Title</h6>
+                            <p class="text-muted small mb-1">By: @item.Seller?.FullName</p>
+                            <p class="fw-bold text-success mb-1">
+                                PKR @item.CurrentBid.ToString("N0")
+                            </p>
+                            <p class="small text-muted mb-0">
+                                Min: PKR @item.MinimumBid.ToString("N0")
+                            </p>
+                            <small class="text-danger">
+                                <i class="fas fa-clock"></i>
+                                Ends: @item.BidEndDate.ToString("dd MMM yyyy HH:mm")
+                            </small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+
+<div class="mt-4">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Home
+    </a>
+</div>

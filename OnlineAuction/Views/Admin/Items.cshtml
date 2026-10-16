@@ -1,0 +1,51 @@
+@model List<Item>
+@{
+    ViewData["Title"] = "All Items";
+}
+
+<div class="d-flex justify-content-between mb-4">
+    <h4 class="fw-bold"><i class="fas fa-list"></i> All Items (@Model.Count)</h4>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Back</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Title</th>
+                <th>Seller</th>
+                <th>Category</th>
+                <th>Current Bid</th>
+                <th>End Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Item" asp-action="Details" asp-route-id="@item.ItemId"
+                           class="text-decoration-none fw-semibold">
+                            @item.Title
+                        </a>
+                    </td>
+                    <td class="small">@item.Seller?.FullName</td>
+                    <td><span class="badge bg-secondary">@item.Category?.Name</span></td>
+                    <td class="text-success fw-bold">PKR @item.CurrentBid.ToString("N0")</td>
+                    <td class="small">@item.BidEndDate.ToString("dd MMM yyyy")</td>
+                    <td>
+                        @if (item.BidStatus == 'A')
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Ended</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

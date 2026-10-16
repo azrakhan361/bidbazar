@@ -1,0 +1,95 @@
+@model HomeViewModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+<!-- Hero / Search Bar -->
+<div class="p-4 mb-4 rounded-4 text-white" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+    <h1 class="fw-bold mb-1"><i class="fas fa-gavel text-warning"></i> BidBazaar</h1>
+    <p class="text-secondary mb-3">Pakistan's Online Auction Platform</p>
+    <form asp-action="Index" asp-controller="Home" method="get" class="d-flex gap-2">
+        <input type="text" name="search" value="@Model.SearchQuery"
+               class="form-control form-control-lg" placeholder="Search for items..." style="max-width:500px"/>
+        <button class="btn btn-warning btn-lg px-4">
+            <i class="fas fa-search"></i> Search
+        </button>
+    </form>
+</div>
+
+<!-- Search Results -->
+@if (!string.IsNullOrEmpty(Model.SearchQuery))
+{
+    <h4 class="mb-3">
+        <i class="fas fa-search text-muted"></i>
+        Results for "<strong>@Model.SearchQuery</strong>" — @Model.SearchResults.Count item(s) found
+    </h4>
+
+    @if (!Model.SearchResults.Any())
+    {
+        <div class="alert alert-info">No active items match your search.</div>
+    }
+    else
+    {
+        <div class="row g-3 mb-5">
+            @foreach (var item in Model.SearchResults)
+            {
+                <div class="col-md-4">
+                    <a asp-controller="Item" asp-action="Details" asp-route-id="@item.ItemId" class="text-decoration-none text-dark">
+                        <div class="card h-100 hover-shadow">
+                            @if (item.ImagePath != null)
+                            {
+                                <img src="@item.ImagePath" class="card-img-top" style="height:180px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div class="bg-secondary text-white text-center py-5 rounded-top" style="height:180px;">
+                                    <i class="fas fa-image fa-3x opacity-50 mt-3"></i>
+                                </div>
+                            }
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold">@item.Title</h6>
+                                <p class="text-muted small mb-1">@item.Category?.Name</p>
+                                <p class="fw-bold text-success">PKR @item.CurrentBid.ToString("N0")
+                                    <small class="text-muted fw-normal">(min: @item.MinimumBid.ToString("N0"))</small>
+                                </p>
+                                <small class="text-danger"><i class="fas fa-clock"></i> Ends @item.BidEndDate.ToString("dd MMM yyyy")</small>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+}
+
+<!-- Categories + Sell Button -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0"><i class="fas fa-th-large text-primary"></i> Browse Categories</h4>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a asp-controller="Item" asp-action="Sell" class="btn btn-accent">
+            <i class="fas fa-plus"></i> Sell an Item
+        </a>
+    }
+</div>
+
+<div class="row g-3">
+    @foreach (var cat in Model.Categories)
+    {
+        var count = cat.Items.Count;
+        <div class="col-6 col-md-4 col-lg-3">
+            <a asp-controller="Item" asp-action="Category" asp-route-id="@cat.CategoryId"
+               class="text-decoration-none">
+                <div class="card text-center p-3 h-100">
+                    <i class="fas fa-tag fa-2x mb-2" style="color:var(--accent)"></i>
+                    <h6 class="fw-bold mb-1">@cat.Name</h6>
+                    <span class="badge bg-secondary">@count item@(count != 1 ? "s" : "") for sale</span>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<style>
+.hover-shadow:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.15); transform: translateY(-2px); transition: all 0.2s; }
+</style>

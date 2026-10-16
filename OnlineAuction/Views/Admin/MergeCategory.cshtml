@@ -1,0 +1,40 @@
+@model MergeCategoryViewModel
+@{
+    ViewData["Title"] = "Merge Categories";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h4 class="fw-bold mb-4">
+                <i class="fas fa-compress-alt text-warning"></i> Merge Categories
+            </h4>
+            <p class="text-muted small">
+                All items from the <strong>Source</strong> category will be moved to the
+                <strong>Target</strong> category. The source category will be deleted.
+            </p>
+            <form asp-action="MergeCategory" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label asp-for="SourceCategoryId" class="form-label fw-semibold"></label>
+                    <select asp-for="SourceCategoryId" class="form-select"
+                            asp-items="@(new SelectList(Model.Categories, "CategoryId", "Name"))">
+                        <option value="">-- Select Source --</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="TargetCategoryId" class="form-label fw-semibold"></label>
+                    <select asp-for="TargetCategoryId" class="form-select"
+                            asp-items="@(new SelectList(Model.Categories, "CategoryId", "Name"))">
+                        <option value="">-- Select Target --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-warning w-100"
+                        onclick="return confirm('This will permanently delete the source category. Continue?')">
+                    <i class="fas fa-compress-alt"></i> Merge Now
+                </button>
+            </form>
+            <a asp-action="Categories" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+        </div>
+    </div>
+</div>

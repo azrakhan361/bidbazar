@@ -1,0 +1,59 @@
+@model List<ApplicationUser>
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="d-flex justify-content-between mb-4">
+    <h4 class="fw-bold"><i class="fas fa-users"></i> All Users</h4>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Back</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Registered</th>
+                <th>Rating</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr class="@(user.IsBlocked ? "table-danger" : "")">
+                    <td class="fw-semibold">@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>@user.RegisteredAt.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <span class="badge @(user.CumulativeRating >= 0 ? "bg-success" : "bg-danger")">
+                            @user.CumulativeRating
+                        </span>
+                    </td>
+                    <td>
+                        @if (user.IsBlocked)
+                        {
+                            <span class="badge bg-danger">Blocked</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                    </td>
+                    <td>
+                        <form asp-action="ToggleBlock" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <button class="btn btn-sm @(user.IsBlocked ? "btn-success" : "btn-danger")"
+                                    onclick="return confirm('Are you sure?')">
+                                @(user.IsBlocked ? "Unblock" : "Block")
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
